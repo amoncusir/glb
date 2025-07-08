@@ -10,4 +10,8 @@
 
 .PHONY: test
 test:
-	go tests -v ./...
+	go test -v ./...
+
+.PHONY: run
+run:
+	go run .
