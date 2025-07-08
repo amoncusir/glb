@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+        "name": "Build & Run All Tests (Current Package)",
+        "type": "go",
+        "request": "launch",
+        "mode": "test",                   // Tells Delve to run test binary
+        "program": "${fileDirname}",      // The current folder = current package
+        "cwd": "${workspaceFolder}",      // Project root
+        "buildFlags": "",                 // Optional: Add build tags or flags here
+        "args": [],                       // Optional: Add test args like -v or -run
+        "showLog": true,                  // Enable Delve debug logs
+        "trace": "verbose",               // Show adapter logs (useful for debugging)
+        "env": {}                         // Optional: set environment variables
+        }
+    ]
+}

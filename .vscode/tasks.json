@@ -1,0 +1,11 @@
+{
+    "tasks": [
+        {
+            "label": "BuildTests",
+            "type": "shell",
+            "command": "go",
+            "args": ["test", "-v", "./...", "-o", "./_all_tests.test"],
+            "problemMatcher": []
+        }
+    ]
+}
