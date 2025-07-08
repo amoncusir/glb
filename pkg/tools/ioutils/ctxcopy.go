@@ -10,7 +10,7 @@ func CtxCopy(ctx context.Context, source io.Reader, dest io.Writer, buf []byte) 
 	for {
 		select {
 		case <-ctx.Done():
-			return 0, ctx.Err()
+			return written, ctx.Err()
 		default:
 		}
 
