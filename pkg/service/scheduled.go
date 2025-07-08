@@ -50,7 +50,7 @@ func (s *scheduledService) Instances() []instance.Instance {
 
 // Instances implements Service.
 func (s *scheduledService) AddInstance(inst instance.Instance) error {
-	logger.Printf("New logger added: %s\n", inst)
+	logger.Printf("New instance added: %s\n", inst)
 
 	s.updaterLck.Lock()
 	defer s.updaterLck.Unlock()

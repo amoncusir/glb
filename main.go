@@ -37,7 +37,10 @@ func main() {
 	if u, err := unres.ExtractFromUri("tcp://0.0.0.0:9000"); err != nil {
 		logger.Fatal("Invalid Instance URI")
 	} else {
-		srv.AddInstance(instance.New(u))
+		err = srv.AddInstance(instance.New(u))
+		if err != nil {
+			logger.Fatal(err)
+		}
 	}
 
 	e.Listen(rt)

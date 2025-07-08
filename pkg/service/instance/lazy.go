@@ -15,9 +15,6 @@ func newLazyHealthcheck(uri *unres.Uri, cnFn ConnFn) *lazyHealthcheck {
 
 		Interval: 5 * time.Second,
 
-		CallbackHealthy:   func() {},
-		CallbackUnhealthy: func() {},
-
 		watching:      &atomic.Bool{},
 		statusChannel: make(chan Status),
 		lastStatus:    &atomic.Int64{},
@@ -80,6 +77,10 @@ func (lazy *lazyHealthcheck) setHealth(status Status) error {
 // Watch implements Instance.
 func (lazy *lazyHealthcheck) Watch() error {
 
+	if lazy.CallbackHealthy == nil || lazy.CallbackUnhealthy == nil {
+		return errors.New("callbacks must be added")
+	}
+
 	if !lazy.watching.CompareAndSwap(false, true) {
 		return errors.New("already watching")
 	}
@@ -120,6 +121,7 @@ func (lazy *lazyHealthcheck) watch() {
 }
 
 func (lazy *lazyHealthcheck) watchUntilHealthy(ctx context.Context) {
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -134,14 +136,16 @@ func (lazy *lazyHealthcheck) watchUntilHealthy(ctx context.Context) {
 		}
 
 		conn, err := lazy.connFn(ctx, lazy.uri)
+		conn.Close()
 
 		if err == nil {
-			conn.Close()
 			break
 		}
 
 		time.Sleep(lazy.Interval)
 	}
+
+	lazy.statusChannel <- STATUS_HEALTHY
 }
 
 // Watch implements Instance.
