@@ -2,33 +2,45 @@ package ioutils
 
 import (
 	"context"
+	"errors"
 	"io"
 )
 
-// Reply bytes in both ways until any RW has more content
+type replyResult struct {
+	w   int64
+	err error
+}
+
+// Enable bidirectional communication
 func Reply(ctx context.Context, source io.ReadWriter, dest io.ReadWriter, buf []byte) error {
 
-	for i := 0; ; i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		s, d := source, dest
-		if i%2 != 0 {
-			// Dest -> Source
-			s = dest
-			d = source
-		}
-
-		if w, err := CtxCopy(ctx, s, d, buf); err != nil {
-			return err
-		} else if w <= 0 {
-			// No sended bytes
-			break
-		}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
 	}
 
-	return nil
+	result := make(chan replyResult, 2)
+	defer close(result)
+
+	go func() {
+		w, err := CtxCopy(ctx, dest, source, buf)
+		result <- replyResult{
+			w:   w,
+			err: err,
+		}
+	}()
+
+	go func() {
+		w, err := CtxCopy(ctx, source, dest, buf)
+		result <- replyResult{
+			w:   w,
+			err: err,
+		}
+	}()
+
+	r1 := <-result
+	r2 := <-result
+
+	return errors.Join(r1.err, r2.err)
 }
