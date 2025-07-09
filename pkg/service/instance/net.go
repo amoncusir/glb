@@ -20,12 +20,12 @@ func New(uri *unres.Uri) Instance {
 		return d.DialContext(ctx, uri.Scheme, uri.Autority.String())
 	}
 
-	replier := newReplier(uri, connFn)
+	replier := newCancelableReplier(uri, connFn)
 	healthcheck := newLazyHealthcheck(uri, connFn)
 
 	return &lazyInstance{
-		replier:         replier,
-		lazyHealthcheck: healthcheck,
+		cancelableReplier: replier,
+		lazyHealthcheck:   healthcheck,
 	}
 }
 
@@ -33,7 +33,7 @@ type lazyInstance struct {
 	_ noCopy
 
 	*lazyHealthcheck
-	*replier
+	*cancelableReplier
 }
 
 // AddHealthyCallback implements Instance.
@@ -58,17 +58,17 @@ func (i *lazyInstance) AddUnhealthyCallback(fn func(self Instance)) error {
 
 // Address implements Instance.
 func (i *lazyInstance) Protocol() string {
-	return i.replier.uri.Scheme
+	return i.cancelableReplier.uri.Scheme
 }
 
 // Address implements Instance.
 func (i *lazyInstance) Address() string {
-	return i.replier.uri.Autority.String()
+	return i.cancelableReplier.uri.Autority.String()
 }
 
 // Reply implements Instance.
 func (i *lazyInstance) Reply(ctx context.Context, req types.RequestConn) error {
-	err := i.replier.Reply(ctx, req)
+	err := i.cancelableReplier.Reply(ctx, req)
 
 	if err != nil {
 		i.lazyHealthcheck.SetUnhealthy()
