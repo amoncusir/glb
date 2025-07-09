@@ -1,7 +1,6 @@
 package ioutils
 
 import (
-	"context"
 	"io"
 	"testing"
 
@@ -15,9 +14,10 @@ func min(a, b int) int {
 	return b
 }
 
-func newRW(name string, chunks ...string) *RWChunked {
+func newRW(syncronizer chan string, name string, chunks ...string) *RWChunked {
 	inst := &RWChunked{
-		name: name,
+		name:     name,
+		syncBtwn: syncronizer,
 	}
 
 	for i, c := range chunks {
@@ -32,18 +32,34 @@ func newRW(name string, chunks ...string) *RWChunked {
 }
 
 type RWChunked struct {
+	io.ReadWriter
+
+	syncBtwn chan string
+
 	name    string
 	rbuffer []byte
+	rlen    int
 	rchunks [][]byte
 
 	wchunks [][]byte
 }
 
 func (rw *RWChunked) Read(p []byte) (n int, err error) {
+
 	bl := len(rw.rbuffer)
 
 	if bl <= 0 {
 		return 0, io.EOF
+	}
+
+	if rw.rlen <= 0 {
+		for {
+			n := <-rw.syncBtwn
+			if rw.name == n {
+				break
+			}
+			rw.syncBtwn <- n
+		}
 	}
 
 	pl := len(p)
@@ -57,9 +73,9 @@ func (rw *RWChunked) Read(p []byte) (n int, err error) {
 	copy(p, rw.rbuffer[:n])
 
 	rw.rbuffer = rw.rbuffer[n:]
+	rw.rlen = len(rw.rbuffer)
 
 	if len(rw.rbuffer) <= 0 {
-		err = io.EOF
 
 		if len(rw.rchunks) > 0 {
 			rw.rbuffer = rw.rchunks[0]
@@ -69,6 +85,8 @@ func (rw *RWChunked) Read(p []byte) (n int, err error) {
 			} else {
 				rw.rchunks = make([][]byte, 0)
 			}
+		} else {
+			err = io.EOF // Return EOF only when no has more chunks
 		}
 	}
 
@@ -76,6 +94,7 @@ func (rw *RWChunked) Read(p []byte) (n int, err error) {
 }
 
 func (rw *RWChunked) Write(p []byte) (n int, err error) {
+
 	dst := make([]byte, len(p))
 	copy(dst, p)
 
@@ -97,12 +116,22 @@ func (rw *RWChunked) WChunks() []string {
 func TestReplyFnWithLargeBuffer(t *testing.T) {
 	assert := assert.New(t)
 
-	source := newRW("source", "first", "third", "fifth")
-	dest := newRW("dest", "second", "fourth")
+	syncronizer := make(chan string)
+	source := newRW(syncronizer, "source", "first", "third", "fifth")
+	dest := newRW(syncronizer, "dest", "second", "fourth")
 	buff := make([]byte, 64)
 
+	go func() {
+		// Simulate the client <-> server comunication between services
+		syncronizer <- "source"
+		syncronizer <- "dest"
+		syncronizer <- "source"
+		syncronizer <- "dest"
+		syncronizer <- "source"
+	}()
+
 	// Act
-	Reply(context.Background(), (io.ReadWriter)(source), (io.ReadWriter)(dest), buff)
+	Reply(t.Context(), source, dest, buff)
 
 	assert.Equal([]string{"second", "fourth"}, source.WChunks())
 	assert.Equal([]string{"first", "third", "fifth"}, dest.WChunks())
@@ -111,12 +140,21 @@ func TestReplyFnWithLargeBuffer(t *testing.T) {
 func TestReplyFnWithSmallBuffer(t *testing.T) {
 	assert := assert.New(t)
 
-	source := newRW("source", "first", "third", "fifth")
-	dest := newRW("dest", "second", "fourth")
+	syncronizer := make(chan string)
+	source := newRW(syncronizer, "source", "first", "third", "fifth")
+	dest := newRW(syncronizer, "dest", "second", "fourth")
 	buff := make([]byte, 1)
 
+	go func() {
+		syncronizer <- "source"
+		syncronizer <- "dest"
+		syncronizer <- "source"
+		syncronizer <- "dest"
+		syncronizer <- "source"
+	}()
+
 	// Act
-	Reply(context.Background(), (io.ReadWriter)(source), (io.ReadWriter)(dest), buff)
+	Reply(t.Context(), source, dest, buff)
 
 	assert.Equal([]string{"s", "e", "c", "o", "n", "d", "f", "o", "u", "r", "t", "h"}, source.WChunks())
 	assert.Equal([]string{"f", "i", "r", "s", "t", "t", "h", "i", "r", "d", "f", "i", "f", "t", "h"}, dest.WChunks())
