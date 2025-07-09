@@ -105,6 +105,9 @@ func (e *socketEndpoint) listenLoop(rt router.Router) {
 
 	e.setStatus(STATUS_LISTEN)
 
+	// Rehuse the context to avoid reallocation
+	ctx := context.Background()
+
 	for {
 		conn, err := e.listener.Accept()
 
@@ -114,8 +117,6 @@ func (e *socketEndpoint) listenLoop(rt router.Router) {
 		}
 
 		go func() {
-			ctx := context.Background()
-
 			if e.timeout > 0 {
 				cc, c := context.WithTimeout(ctx, e.timeout)
 				defer c()
