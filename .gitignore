@@ -1,3 +1,7 @@
+### Generated Files
+
+/test/mock/*
+
 ### PyCharm / JetBrains
 .idea/
 
