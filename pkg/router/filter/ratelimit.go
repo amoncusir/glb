@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	PRESSURE_SIZE = 16                 // 2^16 = 65536 values
-	RATE_SIZE     = 64 - PRESSURE_SIZE // 2^48 = 281474976710656 values
+	PRESSURE_SIZE  = 16                 // 2^16 = 65536 values
+	LAST_TIME_SIZE = 64 - PRESSURE_SIZE // 2^48 = 281474976710656 values
 )
 
 func TBRatelimit() PreFilter {
@@ -31,22 +31,22 @@ func (r *rtbRatelimit) Accept(ctx context.Context, req types.RequestConn) error 
 	b := r.getDataByReq(req)
 	now := uint64(time.Now().UnixMilli()) & 0x0000_FFFFFFFFFFFF // Set the same precision
 
-	lb := b.Load()
+	bucket := b.Load()
 
-	lp := lb >> RATE_SIZE
-	elapsed := now - (lb & 0x0000_FFFFFFFFFFFF)
+	lastPressure := bucket >> LAST_TIME_SIZE
+	elapsed := now - (bucket & 0x0000_FFFFFFFFFFFF)
 	compression := elapsed * r.compressionRate
 
-	pressure := min(r.capacity, lp+compression)
+	pressure := min(r.capacity, lastPressure+compression)
 
 	if pressure <= 0 {
 		// Not Allowed also not saved as modifier
 		return errors.New("blocked petition by rate limit")
 	}
 
-	lb = ((pressure - 1) << RATE_SIZE) & now
+	bucket = ((pressure - 1) << LAST_TIME_SIZE) & now
 
-	b.Store(lb)
+	b.Store(bucket)
 
 	return nil
 }
