@@ -3,6 +3,7 @@ module amoncusir/example
 go 1.24.4
 
 require github.com/stretchr/testify v1.10.0
+require go.uber.org/mock v0.5.2
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
