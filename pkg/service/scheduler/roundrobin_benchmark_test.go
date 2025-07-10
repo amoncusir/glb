@@ -32,14 +32,14 @@ func BenchmarkRoundRobinOneThread(b *testing.B) {
 	})
 
 	b.Run("Buffered Channel counter implementation with double of instance size", func(b *testing.B) {
-		sh := scheduler.AsyncRoundRobin(100)
+		sh := scheduler.ChanneledRoundRobin(100)
 		for b.Loop() {
 			sh.Select(ins)
 		}
 	})
 
 	b.Run("Buffered Channel counter implementation with half of instance size", func(b *testing.B) {
-		sh := scheduler.AsyncRoundRobin(25)
+		sh := scheduler.ChanneledRoundRobin(25)
 		for b.Loop() {
 			sh.Select(ins)
 		}
@@ -59,7 +59,7 @@ func BenchmarkRoundRobinParallel(b *testing.B) {
 	})
 
 	b.Run("Buffered Channel counter implementation with double of instance size", func(b *testing.B) {
-		sh := scheduler.AsyncRoundRobin(100)
+		sh := scheduler.ChanneledRoundRobin(100)
 		b.RunParallel(func(p *testing.PB) {
 			for p.Next() {
 				sh.Select(ins)
@@ -68,7 +68,7 @@ func BenchmarkRoundRobinParallel(b *testing.B) {
 	})
 
 	b.Run("Buffered Channel counter implementation with half of instance size", func(b *testing.B) {
-		sh := scheduler.AsyncRoundRobin(25)
+		sh := scheduler.ChanneledRoundRobin(25)
 		b.RunParallel(func(p *testing.PB) {
 			for p.Next() {
 				sh.Select(ins)

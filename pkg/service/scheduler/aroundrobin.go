@@ -5,7 +5,8 @@ import (
 	"runtime"
 )
 
-func AsyncRoundRobin(buffer int) Scheduler {
+// This RoundRobin implementation using channel performs worst than the other, wich uses Atomic Counters
+func ChanneledRoundRobin(buffer int) Scheduler {
 	generated := make(chan int, buffer)
 	canceled := make(chan int)
 
@@ -22,7 +23,7 @@ func AsyncRoundRobin(buffer int) Scheduler {
 		}
 	}()
 
-	s := &asyncRoundRobin{
+	s := &channelRoundRobin{
 		generated: generated,
 	}
 
@@ -34,11 +35,15 @@ func AsyncRoundRobin(buffer int) Scheduler {
 	return s
 }
 
-type asyncRoundRobin struct {
+type channelRoundRobin struct {
 	generated chan int
 }
 
-func (s *asyncRoundRobin) Select(inst []instance.Instance) instance.Instance {
+func (s *channelRoundRobin) Select(inst []instance.Instance) instance.Instance {
+	if len(inst) <= 0 {
+		panic("empty instance slice")
+	}
+
 	var i int = <-s.generated
 
 	return inst[i%len(inst)]

@@ -15,7 +15,7 @@ func TestARoundRobinFixedSlice(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	assert := assert.New(t)
 
-	sh := AsyncRoundRobin(5)
+	sh := ChanneledRoundRobin(5)
 
 	ins := make([]instance.Instance, 10)
 
@@ -48,7 +48,7 @@ func TestARoundRobinDynamicSlice(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	assert := assert.New(t)
 
-	sh := AsyncRoundRobin(5)
+	sh := ChanneledRoundRobin(5)
 	ins := make([]instance.Instance, 10)
 
 	for i := range ins {
@@ -87,7 +87,7 @@ func TestARoundRobinDynamicSlice(t *testing.T) {
 func TestARoundRobinParallel(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	sh := AsyncRoundRobin(5)
+	sh := ChanneledRoundRobin(5)
 	ins := make([]instance.Instance, 10)
 	n := 4
 
