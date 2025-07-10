@@ -12,7 +12,9 @@
         "program": "${fileDirname}",      // The current folder = current package
         "cwd": "${workspaceFolder}",      // Project root
         "buildFlags": "",                 // Optional: Add build tags or flags here
-        "args": [],                       // Optional: Add test args like -v or -run
+        "args": [
+            "-v"
+        ],                       // Optional: Add test args like -v or -run
         "showLog": true,                  // Enable Delve debug logs
         "trace": "verbose",               // Show adapter logs (useful for debugging)
         "env": {}                         // Optional: set environment variables
