@@ -16,10 +16,6 @@ type roundRobin struct {
 }
 
 func (s *roundRobin) Select(inst []instance.Instance) instance.Instance {
-	return s.nextInstance(inst)
-}
-
-func (s *roundRobin) nextInstance(inst []instance.Instance) instance.Instance {
 	if len(inst) <= 0 {
 		panic("empty instance slice")
 	}
