@@ -1,4 +1,8 @@
 
+PWD := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+SRC = $(PWD)
+MOCK = $(PWD)test/mock/
+
 ## Target convention naming:
 ## <Action>[-<Identifier>] :: Examples:
 ### `install` -> Just the action because is a generic task may implies other tasks.
@@ -10,8 +14,15 @@
 
 .PHONY: test
 test:
-	go test -v ./...
+	go test -v $(PWD)...
 
 .PHONY: run
 run:
 	go run .
+
+.PHONY: mock
+mock: $(MOCK)instance.go
+	@echo "exec mocks"
+
+$(MOCK)instance.go: $(SRC)pkg/service/instance/instance.go
+	mockgen -source $^ -destination $@ -package mock
