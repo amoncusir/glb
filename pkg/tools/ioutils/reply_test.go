@@ -7,13 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func newRW(syncronizer chan string, name string, chunks ...string) *RWChunked {
 	inst := &RWChunked{
 		name:     name,
