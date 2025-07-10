@@ -29,12 +29,12 @@ type rtbRatelimit struct {
 // Accept implements PreFilter.
 func (r *rtbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
 	b := r.getDataByReq(req)
-	now := uint64(time.Now().UnixMilli() >> RATE_SIZE)
+	now := uint64(time.Now().UnixMilli()) & 0x0000_FFFFFFFFFFFF // Set the same precision
 
 	lb := b.Load()
 
 	lp := lb >> RATE_SIZE
-	elapsed := now - uint64(lb<<PRESSURE_SIZE)
+	elapsed := now - (lb & 0x0000_FFFFFFFFFFFF)
 	compression := elapsed * r.compressionRate
 
 	pressure := min(r.capacity, lp+compression)
