@@ -14,26 +14,30 @@ const (
 	LAST_TIME_SIZE = 64 - PRESSURE_SIZE // 2^48 = 281474976710656 values
 )
 
-func TBRatelimit(n uint16, inMillis uint) PreFilter {
-	return newtbRatelimit(n, inMillis)
+func TBRatelimit(size uint16, recoveryTime, recoveryUnit uint) PreFilter {
+	rl := newtbRatelimit(size, recoveryTime)
+	rl.recovery = int64(recoveryUnit)
+	return rl
 }
 
 func newtbRatelimit(capacity uint16, window uint) *tbRatelimit {
 	return &tbRatelimit{
-		capacity: int64(capacity),
-		window:   int64(window),
-		weight:   1,
-		buckets:  &sync.Map{},
+		capacity:  int64(capacity),
+		window:    int64(window),
+		discharge: 1,
+		recovery:  1,
+		buckets:   &sync.Map{},
 	}
 }
 
 // TokenBucket implementation to filter by reate limit
 // int64 type prevent casting and type conversion during the compute
 type tbRatelimit struct {
-	capacity int64
-	window   int64
-	weight   int64
-	buckets  *sync.Map
+	capacity  int64
+	window    int64
+	recovery  int64
+	discharge int64
+	buckets   *sync.Map
 }
 
 // Accept implements PreFilter.
@@ -46,7 +50,7 @@ func (r *tbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
 	lastPressure := bucket >> LAST_TIME_SIZE
 	elapsed := now - (bucket & 0x0000_FFFFFFFFFFFF)
 
-	compression := elapsed / r.window
+	compression := (elapsed / r.window) * r.recovery
 	pressure := min(r.capacity, lastPressure+compression)
 
 	if pressure <= 0 {
@@ -54,7 +58,7 @@ func (r *tbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
 		return errors.New("blocked petition by rate limit")
 	}
 
-	bucket = ((pressure - r.weight) << LAST_TIME_SIZE) | now
+	bucket = ((pressure - r.discharge) << LAST_TIME_SIZE) | now
 
 	b.Store(bucket)
 
