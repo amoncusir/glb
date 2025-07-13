@@ -13,12 +13,10 @@ import (
 func TestRateLimitDenyAfterEmpty(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
-	add := mock.NewMockAddr(ctrl)
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	add.EXPECT().String().Return("0.0.0.0").AnyTimes()
-	req.EXPECT().RemoteAddr().Return(add).AnyTimes()
+	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 1_000)
 
@@ -34,12 +32,10 @@ func TestRateLimitDenyAfterEmpty(t *testing.T) {
 func TestRateLimitDenyedAndAcceptBeforeTime(t *testing.T) {
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
-	add := mock.NewMockAddr(ctrl)
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	add.EXPECT().String().Return("0.0.0.0").AnyTimes()
-	req.EXPECT().RemoteAddr().Return(add).AnyTimes()
+	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 1_000)
 

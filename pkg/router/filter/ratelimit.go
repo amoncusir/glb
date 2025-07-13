@@ -22,6 +22,7 @@ func TBRatelimit(size uint16, recoveryTime, recoveryUnit uint) PreFilter {
 
 func newtbRatelimit(capacity uint16, window uint) *tbRatelimit {
 	return &tbRatelimit{
+		timeRef:   int64(time.Now().UnixMilli()),
 		capacity:  int64(capacity),
 		window:    int64(window),
 		discharge: 1,
@@ -33,6 +34,7 @@ func newtbRatelimit(capacity uint16, window uint) *tbRatelimit {
 // TokenBucket implementation to filter by reate limit
 // int64 type prevent casting and type conversion during the compute
 type tbRatelimit struct {
+	timeRef   int64 // Used to reduce the UNIX time reference and give more bits to calculate the elapsed time
 	capacity  int64
 	window    int64
 	recovery  int64
@@ -42,7 +44,7 @@ type tbRatelimit struct {
 
 // Accept implements PreFilter.
 func (r *tbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
-	now := int64(time.Now().UnixMilli()) & 0x0000_FFFFFFFFFFFF // Set the same precision
+	now := int64(time.Now().UnixMilli()-r.timeRef) & 0x0000_FFFFFFFFFFFF // Set the same precision bits
 	b := r.getBucketByReq(req)
 
 	bucket := b.Load()
@@ -67,7 +69,14 @@ func (r *tbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
 
 // Uses the first (BE) 16 bits for the counter and last 48 bits for the last acceded time
 func (r *tbRatelimit) getBucketByReq(req types.RequestConn) *atomic.Int64 {
-	// TODO: The current req.RemoteAddr().String() get the IP + Port of the remote. Must be changed!
-	b, _ := r.buckets.LoadOrStore(req.RemoteAddr().String(), &atomic.Int64{})
+	key := req.RemoteIp()
+	b, ok := r.buckets.Load(key)
+
+	if !ok {
+		b = &atomic.Int64{}
+		b.(*atomic.Int64).Store(r.capacity << LAST_TIME_SIZE & -281474976710656) // 0xFFFF_000000000000 as uint64 in complement a2
+		r.buckets.Store(key, b)
+	}
+
 	return b.(*atomic.Int64)
 }
