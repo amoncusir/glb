@@ -118,12 +118,14 @@ func (e *socketEndpoint) listenLoop(rt router.Router) {
 
 		go func() {
 			if e.timeout > 0 {
-				cc, c := context.WithTimeout(ctx, e.timeout)
+				timeout := time.Now().Add(e.timeout)
+				conn.SetDeadline(timeout)
+				cc, c := context.WithDeadline(ctx, timeout)
 				defer c()
 				ctx = cc
 			}
 
-			err := rt.RouteRequest(ctx, types.RequestConn(conn))
+			err := rt.RouteRequest(ctx, types.RequestConn(reqFromConn(conn)))
 
 			defer conn.Close()
 
