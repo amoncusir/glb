@@ -112,25 +112,25 @@ func TestRateLimitOnConcurrentCallsNoDrainCapacity(t *testing.T) {
 }
 
 func TestRateLimitOnConcurrentCallsDrainCapacity(t *testing.T) {
+	// Test Parameters
 	parallelization := 10_000
 	windowTime := 10
-
 	initialBudget := 10
 	petitions := 100
-
 	acceptableDeviation := 0.995
 
+	// Arrange
 	assert := assert.New(t)
 	ctrl := gomock.NewController(t)
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
+	errs := make(chan error)
+	wg := &sync.WaitGroup{}
+	collectedErrors := []error{}
 
 	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(uint16(initialBudget), uint(windowTime/initialBudget)) // 100 accepts every second
-
-	errs := make(chan error)
-	wg := &sync.WaitGroup{}
 
 	callFn := func() {
 		defer wg.Done()
@@ -140,17 +140,17 @@ func TestRateLimitOnConcurrentCallsDrainCapacity(t *testing.T) {
 		}
 	}
 
+	// Act
+	wg.Add(parallelization) // Perform 100 calls in one second
+
 	go func() {
 		wg.Wait()
 		close(errs)
 	}()
 
-	wg.Add(parallelization) // Perform 100 calls in one second
 	for range parallelization {
 		go callFn()
 	}
-
-	collectedErrors := []error{}
 
 	for err := range errs {
 		if err != nil {
@@ -158,6 +158,7 @@ func TestRateLimitOnConcurrentCallsDrainCapacity(t *testing.T) {
 		}
 	}
 
+	// Assert
 	// This algoritm has eventual consistence and more than one request could be accepted.
 	// An acceptable deviation is less then
 	totalCaluledErrors := parallelization*petitions - (petitions * initialBudget)
