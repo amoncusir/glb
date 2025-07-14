@@ -59,7 +59,7 @@ func TestRateLimitReccoverAllCapacity(t *testing.T) {
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
+	req.EXPECT().RemoteIpString().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 1_000/10)
 
@@ -87,7 +87,7 @@ func TestRateLimitOnConcurrentCallsNoDrainCapacity(t *testing.T) {
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
+	req.EXPECT().RemoteIpString().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 100/10) // 100 accepts every second
 
@@ -128,7 +128,7 @@ func TestRateLimitOnConcurrentCallsDrainCapacity(t *testing.T) {
 	wg := &sync.WaitGroup{}
 	collectedErrors := []error{}
 
-	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
+	req.EXPECT().RemoteIpString().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(uint16(initialBudget), uint(windowTime/initialBudget)) // 100 accepts every second
 

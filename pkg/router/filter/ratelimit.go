@@ -69,7 +69,7 @@ func (r *tbRatelimit) Accept(ctx context.Context, req types.RequestConn) error {
 
 // Uses the first (BE) 16 bits for the counter and last 48 bits for the last acceded time
 func (r *tbRatelimit) getBucketByReq(req types.RequestConn) *atomic.Int64 {
-	key := req.RemoteIp()
+	key := req.RemoteIpString()
 	b, ok := r.buckets.Load(key)
 
 	if !ok {

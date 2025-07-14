@@ -17,19 +17,26 @@ type req struct {
 }
 
 // RemoteIp implements types.RequestConn.
-func (r *req) RemoteIp() string {
-	rAdd := r.RemoteAddr().String()
+func (r *req) RemoteIp() net.IP {
+	var ip string
 
+	rAdd := r.RemoteAddr().String()
 	is6 := strings.HasPrefix(rAdd, "[")
 
 	if is6 {
-		if strings.HasSuffix(rAdd, "]") { // No port specified
-			return rAdd
+		if !strings.HasSuffix(rAdd, "]") { // Port specified
+			li := strings.LastIndex(rAdd, ":")
+			rAdd = rAdd[:li]
 		}
 
-		li := strings.LastIndex(rAdd, ":")
-		return rAdd[:li]
+		ip = rAdd[1 : len(rAdd)-1]
 	} else {
-		return strings.Split(rAdd, ":")[0]
+		ip = strings.Split(rAdd, ":")[0]
 	}
+
+	return net.ParseIP(ip)
+}
+
+func (r *req) RemoteIpString() string {
+	return r.RemoteIp().String()
 }
