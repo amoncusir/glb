@@ -74,7 +74,7 @@ func (r *tbRatelimit) getBucketByReq(req types.RequestConn) *atomic.Int64 {
 
 	if !ok {
 		b = &atomic.Int64{}
-		b.(*atomic.Int64).Store(r.capacity << LAST_TIME_SIZE & -281474976710656) // 0xFFFF_000000000000 as uint64 in complement a2
+		b.(*atomic.Int64).Store(r.capacity << LAST_TIME_SIZE & -0x0001_000000000000) // 0xFFFF_000000000000 as uint64 in complement a2
 		r.buckets.Store(key, b)
 	}
 
