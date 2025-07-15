@@ -1,52 +1,56 @@
 package bitmapcheck
 
-var BITMAP_MASK []uint64
+const WORD_SIZE = 32 << (^uint(0) >> 63)
+
+var (
+	bitmapMask []uint
+)
 
 func init() {
-	BITMAP_MASK = make([]uint64, 64)
+	bitmapMask = make([]uint, WORD_SIZE)
 
-	for i := range 64 {
-		BITMAP_MASK[i] = 1 << i
+	for i := range WORD_SIZE {
+		bitmapMask[i] = 1 << i
 	}
 }
 
 func NewBoolean(size int) *BinBitmap {
-	arraySize := size / 64
-	if size % 64 > 0 {
+	arraySize := size / WORD_SIZE
+	if size%WORD_SIZE > 0 {
 		arraySize++
 	}
 
 	return &BinBitmap{
-		bitmap: make([]uint64, arraySize),
+		bitmap: make([]uint, arraySize),
 	}
 }
 
 type BinBitmap struct {
-	bitmap []uint64
+	bitmap []uint
 }
 
 func (b *BinBitmap) Size() (n int) {
-	return len(b.bitmap) * 64
+	return len(b.bitmap) * WORD_SIZE
 }
 
 func (b *BinBitmap) MarkPosition(n int, v bool) {
-	i := n / 64
+	i := n / WORD_SIZE
 
-	chunk := b.bitmap[i]
-	mask := BITMAP_MASK[n%64]
+	word := b.bitmap[i]
+	mask := bitmapMask[n%WORD_SIZE]
 
 	if v {
-		b.bitmap[i] = chunk | mask
+		b.bitmap[i] = word | mask
 	} else {
-		b.bitmap[i] = chunk & ^mask
+		b.bitmap[i] = word & ^mask
 	}
 }
 
 func (b *BinBitmap) GetMark(n int) bool {
-	i := n / 64
+	i := n / WORD_SIZE
 
-	chunk := b.bitmap[i]
-	mask := BITMAP_MASK[n%64]
+	word := b.bitmap[i]
+	mask := bitmapMask[n%WORD_SIZE]
 
-	return (chunk & mask) > 0
+	return (word & mask) > 0
 }
