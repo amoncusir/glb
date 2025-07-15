@@ -29,15 +29,15 @@ type BinBitmap struct {
 	bitmap []uint
 }
 
-func (b *BinBitmap) Size() (n int) {
+func (b *BinBitmap) Size() int {
 	return len(b.bitmap) * WORD_SIZE
 }
 
-func (b *BinBitmap) MarkPosition(n int, v bool) {
-	i := n / WORD_SIZE
+func (b *BinBitmap) Set(k int, v bool) {
+	i := k / WORD_SIZE
 
 	word := b.bitmap[i]
-	mask := bitmapMask[n%WORD_SIZE]
+	mask := bitmapMask[k%WORD_SIZE]
 
 	if v {
 		b.bitmap[i] = word | mask
@@ -46,11 +46,11 @@ func (b *BinBitmap) MarkPosition(n int, v bool) {
 	}
 }
 
-func (b *BinBitmap) GetMark(n int) bool {
-	i := n / WORD_SIZE
+func (b *BinBitmap) Get(k int) bool {
+	i := k / WORD_SIZE
 
 	word := b.bitmap[i]
-	mask := bitmapMask[n%WORD_SIZE]
+	mask := bitmapMask[k%WORD_SIZE]
 
 	return (word & mask) > 0
 }

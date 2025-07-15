@@ -15,13 +15,13 @@ func TestBinBitmap(t *testing.T) {
 	bm := NewBoolean(len(mapCheck))
 
 	for i, v := range mapCheck {
-		bm.MarkPosition(i, v)
+		bm.Set(i, v)
 	}
 
 	t.Log(bm.Size())
 	t.Log(len(mapCheck))
 
 	for i, v := range mapCheck {
-		assert.Equal(v, bm.GetMark(i))
+		assert.Equal(v, bm.Get(i))
 	}
 }
