@@ -59,7 +59,7 @@ func (r *ipAllower) Accept(ctx context.Context, req types.RequestConn) error {
 
 func (r *ipAllower) acceptIp4(ip net.IP) bool {
 	for i, c := range r.ip4 {
-		if !c.GetMark(int(ip[i])) {
+		if !c.Get(int(ip[i])) {
 			return !r.allow
 		}
 	}
@@ -69,7 +69,7 @@ func (r *ipAllower) acceptIp4(ip net.IP) bool {
 
 func (r *ipAllower) acceptIp6(ip net.IP) bool {
 	for i, c := range r.ip6 {
-		if !c.GetMark(int(ip[i])) {
+		if !c.Get(int(ip[i])) {
 			return !r.allow
 		}
 	}
