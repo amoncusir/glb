@@ -22,7 +22,6 @@ func TestBinBitmap(t *testing.T) {
 	t.Log(len(mapCheck))
 
 	for i, v := range mapCheck {
-		t.Logf("Vale: %t, getted: %t", v, bm.GetMark(i))
 		assert.Equal(v, bm.GetMark(i))
 	}
 }
