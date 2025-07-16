@@ -1,6 +1,8 @@
 package hashmap
 
 import (
+	"amoncusir/example/pkg/tools/hashmap"
+
 	"github.com/cespare/xxhash"
 )
 
@@ -33,19 +35,7 @@ func hashKey(key []byte, keySize uint64) uint64 {
 	return xxhash.Sum64(key) % keySize
 }
 
-func beq(a, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func (m *Hashmap) Set(key []byte, v any) {
+func (m *Hashmap) Set(key any, v any) {
 	// Check if the loadFactor stills lower
 	cf := float64(m.items) / float64(m.capacity)
 	if m.loadFactor < cf {
@@ -53,33 +43,28 @@ func (m *Hashmap) Set(key []byte, v any) {
 		m.resize(uint64(float64(m.capacity) * m.resizeFactor))
 	}
 
-	m.simpleSet(key, v)
+	m.simpleSet(hashmap.ParseKey(key), v)
 }
 
 func (m *Hashmap) resize(cap uint64) {
-	pairs := m.Pairs()
-	new := &Hashmap{
-		loadFactor:   m.loadFactor,
-		resizeFactor: m.resizeFactor,
-		items:        0,
-		capacity:     cap,
-		content:      make([]*HMPair, cap),
-	}
-
-	for _, p := range pairs {
-		new.simpleSet(p.key, p.value)
-	}
+	pairs := m.Entries()
 
 	m.capacity = cap
-	m.content = new.content
+	m.content = make([]*HMPair, cap)
+	m.items = 0
+
+	for _, p := range pairs {
+		m.simpleSet(p.key, p.value)
+	}
 }
 
-func (m *Hashmap) simpleSet(key []byte, v any) {
+func (m *Hashmap) simpleSet(akey any, v any) {
+	key := hashmap.ParseKey(akey)
 	i := hashKey(key, m.capacity)
 
 	var p *HMPair
 	for ; ; i++ {
-		if i > m.capacity {
+		if i >= m.capacity {
 			i = 0
 		}
 
@@ -90,7 +75,7 @@ func (m *Hashmap) simpleSet(key []byte, v any) {
 			break
 		}
 
-		if beq(p.key, key) {
+		if hashmap.Beq(p.key, key) {
 			p.value = v
 			return
 		}
@@ -105,13 +90,14 @@ func (m *Hashmap) simpleSet(key []byte, v any) {
 	m.items++
 }
 
-func (m *Hashmap) Get(key []byte) any {
+func (m *Hashmap) Get(akey any) any {
+	key := hashmap.ParseKey(akey)
 	i := hashKey(key, m.capacity)
 	lap := i - 1
 
 	var p *HMPair
 	for ; i != lap; i++ {
-		if i > m.capacity {
+		if i >= m.capacity {
 			i = 0
 		}
 
@@ -122,7 +108,7 @@ func (m *Hashmap) Get(key []byte) any {
 			break
 		}
 
-		if beq(p.key, key) {
+		if hashmap.Beq(p.key, key) {
 			return p.value
 		}
 	}
@@ -130,13 +116,14 @@ func (m *Hashmap) Get(key []byte) any {
 	return nil
 }
 
-func (m *Hashmap) Del(key []byte) any {
+func (m *Hashmap) Del(akey any) any {
+	key := hashmap.ParseKey(akey)
 	i := hashKey(key, m.capacity)
 	lap := i - 1
 
 	var p *HMPair
 	for ; i != lap; i++ {
-		if i > m.capacity {
+		if i >= m.capacity {
 			i = 0
 		}
 
@@ -147,8 +134,9 @@ func (m *Hashmap) Del(key []byte) any {
 			break
 		}
 
-		if beq(p.key, key) {
+		if hashmap.Beq(p.key, key) {
 			m.content[i] = nil
+			m.items--
 			return p.value
 		}
 	}
@@ -160,7 +148,7 @@ func (m *Hashmap) Size() int {
 	return m.items
 }
 
-func (m *Hashmap) Pairs() []*HMPair {
+func (m *Hashmap) Entries() []*HMPair {
 	filledValues := make([]*HMPair, m.items)
 	i := 0
 
