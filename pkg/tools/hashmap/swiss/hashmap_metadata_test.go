@@ -1,4 +1,4 @@
-package hashmap
+package swiss
 
 import (
 	v2 "math/rand/v2"
@@ -49,7 +49,7 @@ func TestHasmapMetadataSetAndGet(t *testing.T) {
 func TestDefaultSetAndGet(t *testing.T) {
 	assert := assert.New(t)
 
-	m := make(map[string]int)
+	m := make(map[string]int, 200)
 
 	pairs := make([]*P, 1_000_000)
 

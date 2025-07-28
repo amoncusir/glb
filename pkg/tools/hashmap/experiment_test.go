@@ -30,10 +30,7 @@ func TestHashBitColision(t *testing.T) {
 	zeroHash := 0
 
 	gLowk := func(k uint64) uint64 {
-		// return ((k * 0x9dc5) & 0x00_00_00_00_00_00_00_FF)
 		return (k % 255) // & 0x00_00_00_00_00_00_00_FF
-		// return k & 0x0000_0000_0000_FFFF
-		// return k & 0x000_000_000_000_FFF
 	}
 
 	matchLowK := func(sum, lowk uint64) bool {

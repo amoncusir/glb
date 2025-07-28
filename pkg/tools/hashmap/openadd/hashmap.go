@@ -1,4 +1,4 @@
-package hashmap
+package openadd
 
 import (
 	"amoncusir/example/pkg/tools/hashmap"

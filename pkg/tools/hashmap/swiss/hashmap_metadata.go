@@ -1,4 +1,4 @@
-package hashmap
+package swiss
 
 import (
 	"amoncusir/example/pkg/tools/hashmap"
@@ -29,7 +29,7 @@ func NewM8(cap uint64, loadFactor, resizeFactor float64) *HashmapM8 {
 const (
 	PARTITION_LENGTH        = 8
 	LOW_MASK_BITS           = 8                         // Myb 4?
-	LOW_MASK         uint64 = 0x00_00_00_00_00_00_00_FF // Myb 0x00_00_00_00_00_00_00_0F?
+	LOW_MASK         uint64 = 0x00_00_00_00_00_00_00_7F // Myb 0x00_00_00_00_00_00_00_0F?
 	HIG_MASK         uint64 = ^LOW_MASK
 )
 
@@ -48,7 +48,7 @@ type HashmapM8 struct {
 	partitions uint64
 
 	content  [][]*HMPair
-	metadata [][]uint16
+	metadata [][]byte
 }
 
 func (m *HashmapM8) Set(key any, v any) {
@@ -62,12 +62,12 @@ func (m *HashmapM8) Set(key any, v any) {
 	m.internalSet(hashmap.ParseKey(key), v)
 }
 
-func hashKeyHL(key []byte) (hk uint64, lk uint8) {
+func hashKeyHL(key []byte) (hk uint64, lk byte) {
 	hk = xxhash.Sum64(key)
 
 	// hk = ((hash & HIG_MASK) >> LOW_MASK_BITS)
 	// lk = uint8(hk & LOW_MASK)
-	lk = uint8(hk % 255)
+	lk = byte(hk % 255)
 	return
 }
 
@@ -100,11 +100,11 @@ func makeContent(p uint64) (content [][]*HMPair) {
 	return
 }
 
-func makeMetadata(p uint64) (metadata [][]uint16) {
-	metadata = make([][]uint16, p)
+func makeMetadata(p uint64) (metadata [][]byte) {
+	metadata = make([][]byte, p)
 
 	for i := range metadata {
-		metadata[i] = make([]uint16, PARTITION_LENGTH)
+		metadata[i] = make([]byte, PARTITION_LENGTH)
 	}
 	return
 }
@@ -155,7 +155,7 @@ func (m *HashmapM8) internalSet(key []byte, v any) {
 		value: v,
 	}
 
-	m.metadata[mainIndex][chukIndex] = 0xFFFF & uint16(lk)
+	m.metadata[mainIndex][chukIndex] = 0x80 & lk
 	container[chukIndex] = pair
 	m.items++
 }
@@ -166,6 +166,7 @@ func (m *HashmapM8) Get(akey any) any {
 	hk, lk := hashKeyHL(key)
 	mainIndex := hk % m.partitions
 	chukIndex := lk % PARTITION_LENGTH
+	lk = 0x80 & lk
 
 	// Happy path
 	container := m.content[mainIndex]
@@ -260,7 +261,11 @@ func (m *HashmapM8) Del(akey any) any {
 		}
 
 		// iterate over metadata values until next are zero or matches the low key
-		for meta := m.metadata[mainIndex][chukIndex]; meta != 0 && uint8(meta) != lk; {
+		for meta := m.metadata[mainIndex][chukIndex]; meta != lk; {
+			if meta == 0 {
+				return nil
+			}
+
 			// If not, find the next
 			chukIndex++
 
