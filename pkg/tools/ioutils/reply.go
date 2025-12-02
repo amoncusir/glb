@@ -11,7 +11,7 @@ type replyResult struct {
 	err error
 }
 
-// Enable bidirectional communication
+// Reply Enable bidirectional communication
 func Reply(ctx context.Context, source io.ReadWriter, dest io.ReadWriter, buf []byte) error {
 
 	select {

@@ -56,7 +56,7 @@ func (i *lazyInstance) AddUnhealthyCallback(fn func(self Instance)) error {
 	return nil
 }
 
-// Address implements Instance.
+// Protocol Address implements Instance.
 func (i *lazyInstance) Protocol() string {
 	return i.cancelableReplier.uri.Scheme
 }

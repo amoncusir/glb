@@ -18,8 +18,9 @@ var (
 	logger = log.Default()
 )
 
-// Do not share Instance between Service.
-// Each Service must contains only one reference of Instance
+// Instance
+// Does not share Instance between Service.
+// Each Service must contain only one reference of Instance
 type Instance interface {
 	Address() string
 	Protocol() string
@@ -29,8 +30,9 @@ type Instance interface {
 	AddUnhealthyCallback(fn func(self Instance)) error
 
 	Reply(ctx context.Context, req types.RequestConn) error
-	// Wait until all replies are finised and blocks new ones
-	Close() error
+
+	// WaitForReplies Wait until all replies are finished and blocks new ones
+	WaitForReplies() error
 
 	Watch() error
 	Unwatch() error

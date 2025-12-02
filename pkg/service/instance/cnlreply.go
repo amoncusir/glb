@@ -12,7 +12,7 @@ func newCancelableReplier(uri *unres.Uri, cnFn ConnFn) *cancelableReplier {
 	return &cancelableReplier{
 		uri:         uri,
 		connFn:      cnFn,
-		replyBuffer: 32 * 1024, // half of the theorical max for a TCP package size
+		replyBuffer: 32 * 1024, // half of the theoretical max for a TCP package size
 		replyGroup:  &sync.WaitGroup{},
 		cancelLck:   &sync.RWMutex{},
 	}
@@ -57,10 +57,10 @@ func (r *cancelableReplier) reply(ctx context.Context, req types.RequestConn) er
 	return err
 }
 
-// Close a current Reply connection
+// WaitForReplies a current Reply connection
 // Do not mislead with Unwatch()
 // Cancel wait until all replies are done.
-func (r *cancelableReplier) Close() error {
+func (r *cancelableReplier) WaitForReplies() error {
 	r.cancelLck.Lock()
 	defer r.cancelLck.Unlock()
 

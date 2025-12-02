@@ -35,7 +35,7 @@ func (s *scheduledService) Close() error {
 	var pErr error
 
 	for _, ins := range s.instances {
-		if err := ins.Close(); err != nil {
+		if err := ins.WaitForReplies(); err != nil {
 			pErr = errors.Join(pErr, err)
 		}
 	}
@@ -48,7 +48,7 @@ func (s *scheduledService) Instances() []instance.Instance {
 	return append([]instance.Instance{}, s.instances...)
 }
 
-// Instances implements Service.
+// AddInstance Instances implements Service.
 func (s *scheduledService) AddInstance(inst instance.Instance) error {
 	logger.Printf("New instance added: %s\n", inst)
 
@@ -95,7 +95,7 @@ func (s *scheduledService) DelInstance(inst instance.Instance) error {
 		s.healthyInstances = slices.Delete(s.healthyInstances, i, i+1)
 	}
 
-	defer inst.Close()
+	defer inst.WaitForReplies()
 	defer inst.Unwatch()
 
 	return nil

@@ -27,7 +27,7 @@ func ChanneledRoundRobin(buffer int) Scheduler {
 		generated: generated,
 	}
 
-	// Another more efficient way to do this is add a Close() method to clean up resources, but implies modify the contract
+	// Another more efficient way to do this is add a WaitForReplies() method to clean up resources, but implies modify the contract
 	runtime.AddCleanup(s, func(ch chan int) {
 		ch <- 0
 	}, canceled)
