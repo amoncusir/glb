@@ -55,4 +55,6 @@ func main() {
 			break
 		}
 	}
+
+	logger.Println("Finish application")
 }
