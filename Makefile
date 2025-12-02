@@ -1,7 +1,22 @@
 
 PWD := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 SRC = $(PWD)
-MOCK = $(PWD)test/mock/
+
+#GO ?= docker run --rm -it -v $(PWD):/go \
+#	--net=host \
+#	golang:1.24.4 go
+GO ?= go
+
+
+# Add .env environment variables unless is running inside of CI pipeline
+ifeq ($(CI), false)
+	-include $(PWD)/.env
+endif
+
+export
+
+-include *.mk
+
 
 ## Target convention naming:
 ## <Action>[-<Identifier>] :: Examples:
@@ -12,23 +27,16 @@ MOCK = $(PWD)test/mock/
 ## Why?
 # Because helps to find the correct targets using the Shell AutoCompletion.
 
+install:
+	$(GO) get $(PWD)
+
+update:
+	$(GO) mod tidy
+
 .PHONY: test
 test:
-	go test -v $(PWD)...
+	$(GO) test -v $(PWD)...
 
 .PHONY: run
 run:
-	go run .
-
-.PHONY: mock
-mock: $(MOCK)instance.go $(MOCK)request_connection.go $(MOCK)net_address.go
-	@echo "exec mocks"
-
-$(MOCK)instance.go: $(SRC)pkg/service/instance/instance.go
-	mockgen -source $^ -destination $@ -package mock
-
-$(MOCK)request_connection.go: $(SRC)pkg/types/request.go
-	mockgen -source $^ -destination $@ -package mock
-
-$(MOCK)net_address.go:
-	mockgen -destination $@ -package mock net Addr
+	$(GO) run .
