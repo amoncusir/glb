@@ -17,7 +17,7 @@ func TestRateLimitDenyAfterEmpty(t *testing.T) {
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
+	req.EXPECT().RemoteIpString().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 1_000)
 
@@ -36,7 +36,7 @@ func TestRateLimitDenyedAndAcceptBeforeTime(t *testing.T) {
 	req := mock.NewMockRequestConn(ctrl)
 	ctx := context.Background()
 
-	req.EXPECT().RemoteIp().Return("0.0.0.0").AnyTimes()
+	req.EXPECT().RemoteIpString().Return("0.0.0.0").AnyTimes()
 
 	rl := newtbRatelimit(10, 1_000)
 
@@ -159,14 +159,14 @@ func TestRateLimitOnConcurrentCallsDrainCapacity(t *testing.T) {
 	}
 
 	// Assert
-	// This algoritm has eventual consistence and more than one request could be accepted.
-	// An acceptable deviation is less then
-	totalCaluledErrors := parallelization*petitions - (petitions * initialBudget)
+	// This algorithm has eventual consistence and more than one request could be accepted.
+	// An acceptable deviation is less than
+	totalCalculatedErrors := parallelization*petitions - (petitions * initialBudget)
 	deviation := 1.0 - acceptableDeviation
-	errorsDeviation := int(float64(totalCaluledErrors) * deviation)
+	errorsDeviation := int(float64(totalCalculatedErrors) * deviation)
 
-	t.Logf("Total errors: %d over calculed: %d and deviation of %d", len(collectedErrors), totalCaluledErrors, errorsDeviation)
+	t.Logf("Total errors: %d over calculed: %d and deviation of %d", len(collectedErrors), totalCalculatedErrors, errorsDeviation)
 
-	assert.LessOrEqual(len(collectedErrors), totalCaluledErrors+errorsDeviation)
-	assert.GreaterOrEqual(len(collectedErrors), totalCaluledErrors-errorsDeviation)
+	assert.LessOrEqual(len(collectedErrors), totalCalculatedErrors+errorsDeviation)
+	assert.GreaterOrEqual(len(collectedErrors), totalCalculatedErrors-errorsDeviation)
 }
