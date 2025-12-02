@@ -10,6 +10,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -28,6 +30,7 @@ func NewSocket(uri *unres.Uri) (Endpoint, error) {
 
 		statusListeners: []chan int{},
 		listener:        nil,
+		closeWait:       &sync.WaitGroup{},
 	}, nil
 }
 
@@ -37,6 +40,7 @@ type socketEndpoint struct {
 	timeout         time.Duration
 	statusListeners []chan int
 	listener        net.Listener
+	closeWait       *sync.WaitGroup
 }
 
 func (e *socketEndpoint) String() string {
@@ -63,7 +67,12 @@ func (e *socketEndpoint) Close() error {
 		e.setStatus(STATUS_CLOSED)
 	}()
 
-	return ln.Close()
+	err := ln.Close()
+
+	// Wait for the goroutine to finish
+	e.closeWait.Wait()
+
+	return err
 }
 
 func (e *socketEndpoint) Status() <-chan int {
@@ -102,21 +111,36 @@ func (e *socketEndpoint) Listen(rt router.Router) error {
 
 func (e *socketEndpoint) listenLoop(rt router.Router) {
 	defer e.Close()
+	defer e.closeWait.Done()
 
+	e.closeWait.Add(1)
 	e.setStatus(STATUS_LISTEN)
 
-	// Rehuse the context to avoid reallocation
-	ctx := context.Background()
+	errorCount := &atomic.Uint32{}
 
 	for {
 		conn, err := e.listener.Accept()
 
 		if err != nil {
+			if ne, ok := err.(net.Error); ok {
+				if !ne.Timeout() {
+					logger.Printf("Closed connection because of error %s", ne)
+					break
+				}
+			}
+
 			logger.Printf("Error when retrieve data from %s. %s", e, err)
-			break
+
+			// Add a window time to restore the counter!
+			if errorCount.Add(1) > 10 {
+				logger.Print("Too many errors, closing connection")
+				break
+			}
 		}
 
 		go func() {
+			ctx := context.Background()
+
 			if e.timeout > 0 {
 				timeout := time.Now().Add(e.timeout)
 				conn.SetDeadline(timeout)
@@ -134,4 +158,6 @@ func (e *socketEndpoint) listenLoop(rt router.Router) {
 			}
 		}()
 	}
+
+	logger.Println("Finish listening")
 }
