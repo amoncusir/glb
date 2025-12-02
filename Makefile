@@ -6,7 +6,13 @@ SRC = $(PWD)
 #	--net=host \
 #	golang:1.24.4 go
 GO ?= go
+GO_PATH ?= $(shell go env GOPATH)/bin/
+MOCKGEN ?= $(GO_PATH)mockgen
 
+
+define DEV_TOOLS
+	go.uber.org/mock/mockgen@latest
+endef
 
 # Add .env environment variables unless is running inside of CI pipeline
 ifeq ($(CI), false)
@@ -27,15 +33,24 @@ export
 ## Why?
 # Because helps to find the correct targets using the Shell AutoCompletion.
 
-install:
+install: | install-mod install-dev
+
+install-mod:
 	$(GO) get $(PWD)
+
+install-dev:
+	$(foreach dep,$(DEV_TOOLS), $(GO) install $(dep);)
 
 update:
 	$(GO) mod tidy
 
+lint:
+	$(GO) fmt
+
 .PHONY: test
-test:
-	$(GO) test -v $(PWD)...
+test: mock
+	# -count=1 flag disable the test cache and forces to run at least one every test again
+	$(GO) test -v -count=1 $(PWD)...
 
 .PHONY: run
 run:
