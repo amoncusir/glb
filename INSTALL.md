@@ -7,8 +7,10 @@
 Just: `brew install go` installs the latest version of Go.
 
 ## Ubuntu APT
+Installs the 1.24.2 version of Go.
 
-`sudo apt install -y golang-go` installs the 1.24.2 version of Go.
+- `sudo add-apt-repository ppa:longsleep/golang-backports && apt update`
+- `sudo apt install -y golang-go`
 
 ## Check the installation
 
