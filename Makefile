@@ -40,3 +40,9 @@ test:
 .PHONY: run
 run:
 	$(GO) run .
+
+server:
+	netcat -lp 9000
+
+client:
+	netcat localhost 9090
