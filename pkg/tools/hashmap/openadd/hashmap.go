@@ -21,7 +21,7 @@ func New(initCap uint64, loadFactor, resizeFactor float64) *Hashmap {
 	}
 }
 
-// open-addressed hastable simple implementation
+// Hashmap open-addressed hashtable simple implementation
 type Hashmap struct {
 	loadFactor   float64
 	resizeFactor float64
