@@ -136,7 +136,10 @@ func (lazy *lazyHealthcheck) watchUntilHealthy(ctx context.Context) {
 		}
 
 		conn, err := lazy.connFn(ctx, lazy.uri)
-		conn.Close()
+
+		if conn != nil {
+			conn.Close()
+		}
 
 		if err == nil {
 			break
@@ -148,7 +151,7 @@ func (lazy *lazyHealthcheck) watchUntilHealthy(ctx context.Context) {
 	lazy.statusChannel <- STATUS_HEALTHY
 }
 
-// Watch implements Instance.
+// Unwatch implements Instance.
 func (lazy *lazyHealthcheck) Unwatch() error {
 
 	if !lazy.watching.Load() {

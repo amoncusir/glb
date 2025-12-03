@@ -5,6 +5,6 @@ import (
 )
 
 type Scheduler interface {
-	// Must return an slice for the selected instances to reply the message
+	// Select Must return a slice for the selected instances to reply to a message
 	Select(inst []instance.Instance) instance.Instance
 }
