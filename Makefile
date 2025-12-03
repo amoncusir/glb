@@ -57,7 +57,8 @@ run:
 	$(GO) run .
 
 server:
-	netcat -lp 9000
+	docker run --rm -t -e HTTP_PORT=9000 -p 9000:9000 mendhak/http-https-echo
 
+client: URI ?= /hi
 client:
-	netcat localhost 9090
+	curl -v http://localhost:9090$(URI)
